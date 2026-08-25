@@ -37,7 +37,7 @@ var dataset = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
                 .filterBounds(roi)
                 .map(prepLandsat8);
 
-// [수정 핵심] .max() 대신 .mean()을 사용하여 여름철 평균값을 산출합니다.
+
 var mean2020 = dataset.filterDate('2020-05-01', '2020-09-30')
                       .mean()
                       .clip(roi);
