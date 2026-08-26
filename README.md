@@ -1,4 +1,5 @@
-![Uploading 행정+집계구.jpeg…]()
+<img width="9408" height="5154" alt="행정+집계구" src="https://github.com/user-attachments/assets/ff479244-266e-4a65-a3fd-ca4a42b097b4" />
+
 # 🌡️ 광주광역시 북구 도심 열환경 및 다차원 기후 취약성 분석
 (Urban Heat Environment and Climate Vulnerability Analysis in Buk-gu, Gwangju)
 
