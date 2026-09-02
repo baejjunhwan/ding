@@ -1,0 +1,4 @@
+data/
+scripts/
+results/
+figures/
