@@ -1,4 +1,6 @@
-<img width="2801" height="2582" alt="Track12" src="https://github.com/user-attachments/assets/6324bcb2-0637-4ba5-90a7-0512fdcf9bcc" />
+![광주광역시 북구 집계구 단위 기후 취약성 투트랙 타겟팅 (정본 v2)](figs/Track12_v2.png)
+
+> **Fig. 2** 정본(v2) 점수 기준 Track 1·2 우선 타겟 집계구. `analysis/make_track_map.py`로 재생성할 수 있습니다. 저장소에 집계구 경계 폴리곤이 포함되어 있지 않아 중심점(centroid)으로 표시하였습니다.
 
 # 🌡️ 광주광역시 북구 도심 열환경 및 다차원 기후 취약성 분석
 (Urban Heat Environment and Climate Vulnerability Analysis in Buk-gu, Gwangju)
@@ -27,6 +29,7 @@
 * `rebuild_all.py`: 정본 병합 → 구역평균 산출 → 회귀·공간모형 → Track 점수·강건성까지 전 과정 재현
 * `spatial_diagnostics_OA.py`: 집계구 모형 Moran's I, LM 검정, 공간오차·공간시차모형
 * `track_sensitivity.py`: Track 1·2 민감도(상한처리, MAD, winsorizing, ΔNDBI 제외)
+* `make_track_map.py`: 상단 Fig. 2 지도(`figs/Track12_v2.png`) 재생성
 
 ## 📊 데이터 명세서 (Data Dictionary)
 집계구 마스터(`Bukgu_TOT_Master_Data_v2_zonal.csv`)의 주요 변수 설명입니다.
