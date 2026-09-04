@@ -1,6 +1,8 @@
-![광주광역시 북구 집계구 단위 기후 취약성 투트랙 타겟팅 (정본 v2)](figs/Track12_v2.png)
+| 원고 Fig. 2 — Track 1 | 원고 Fig. 3 — Track 2 |
+| :---: | :---: |
+| ![Track 1 우선 타겟 집계구](figs/Fig2_Track1.jpg) | ![Track 2 우선 타겟 집계구](figs/Fig3_Track2.png) |
 
-> **Fig. 2** 정본(v2) 점수 기준 Track 1·2 우선 타겟 집계구. `analysis/make_track_map.py`로 재생성할 수 있습니다. 저장소에 집계구 경계 폴리곤이 포함되어 있지 않아 중심점(centroid)으로 표시하였습니다.
+> **Fig. 2 · Fig. 3** 논문에 수록된 원본 그림 파일입니다. 정본(v2) 마스터의 Track 점수를 집계구 중심점(N=691)에 색상 단계(2~98 백분위)로 표시하고, 상위 10%(n=69) 집계구를 원으로 강조하였습니다. 저장소에 집계구 경계 폴리곤이 포함되어 있지 않아 면(面)이 아닌 중심점(centroid)으로 표시하였습니다. 동일 데이터의 2단 통합본은 `figs/Track12_v2.png`이며 `analysis/make_track_map.py`로 재생성할 수 있습니다.
 
 # 🌡️ 광주광역시 북구 도심 열환경 및 다차원 기후 취약성 분석
 (Urban Heat Environment and Climate Vulnerability Analysis in Buk-gu, Gwangju)
@@ -29,7 +31,12 @@
 * `rebuild_all.py`: 정본 병합 → 구역평균 산출 → 회귀·공간모형 → Track 점수·강건성까지 전 과정 재현
 * `spatial_diagnostics_OA.py`: 집계구 모형 Moran's I, LM 검정, 공간오차·공간시차모형
 * `track_sensitivity.py`: Track 1·2 민감도(상한처리, MAD, winsorizing, ΔNDBI 제외)
-* `make_track_map.py`: 상단 Fig. 2 지도(`figs/Track12_v2.png`) 재생성
+* `make_track_map.py`: Track 1·2 지도 2단 통합본(`figs/Track12_v2.png`) 재생성
+
+### 그림 (figs/)
+* `Fig2_Track1.jpg`: **원고 Fig. 2 원본** — Track 1(단기 인명 구호형) 우선 타겟 집계구
+* `Fig3_Track2.png`: **원고 Fig. 3 원본** — Track 2(중장기 공간 개조형) 우선 타겟 집계구
+* `Track12_v2.png`: 위 두 장을 한 장으로 합친 2단 통합본 (`make_track_map.py` 산출물)
 
 ## 📊 데이터 명세서 (Data Dictionary)
 집계구 마스터(`Bukgu_TOT_Master_Data_v2_zonal.csv`)의 주요 변수 설명입니다.
@@ -62,7 +69,7 @@
 | 집계구 회귀 (3.3절, N=691) | R² = .669, F(5, 685) = 276.5 |
 | 집계구 계수 | ΔNDBI 14.552\*\*\*, 고령비율 0.024\*\*\*, 노후주택 0.180\*\*\*, SAVI −23.648\*\*\*, DEM −0.006\* |
 | 집계구 잔차 Moran's I (Queen) | .504 (p < .001) → SEM(AIC 2047) < OLS(AIC 2616), SEM 잔차 I = −.05 |
-| 무조건부 상관 r(절대온도, 고령비율) | .182 (p < .001) |
+| 무조건부 상관 r(절대온도, 고령비율) | .183 (p < .001) |
 | r(Track 1, Track 2) | .388, 상위 10% 중첩 16/69 (23.2%) |
 | r(ΔNDBI, ΔRLST) | .267 (p < .001) |
 | Track 2 강건성 | MAD ρ=.962 (79.7%) / winsor ρ=.981 (73.9%) / ΔNDBI 제외 ρ=.881 (75.4%) / PCA ρ=.989 (81.2%) |
