@@ -2,7 +2,7 @@
 | :---: | :---: |
 | ![Track 1 우선 타겟 집계구](figs/Fig2_Track1.jpg) | ![Track 2 우선 타겟 집계구](figs/Fig3_Track2.png) |
 
-> **Fig. 2 · Fig. 3** 논문에 수록된 원본 그림 파일입니다. 정본(v2) 마스터의 Track 점수를 집계구 중심점(N=691)에 색상 단계(2~98 백분위)로 표시하고, 상위 10%(n=69) 집계구를 원으로 강조하였습니다. 저장소에 집계구 경계 폴리곤이 포함되어 있지 않아 면(面)이 아닌 중심점(centroid)으로 표시하였습니다. 동일 데이터의 2단 통합본은 `figs/Track12_v2.png`이며 `analysis/make_track_map.py`로 재생성할 수 있습니다.
+> **Fig. 2 · Fig. 3** 논문에 수록된 원본 그림 파일입니다.  Track 점수를 집계구 중심점(N=691)에 색상 단계(2~98 백분위)로 표시하고, 상위 10%(n=69) 집계구를 원으로 강조하였습니다. 동일 데이터의 2단 통합본은 `figs/Track12_v2.png`이며 `analysis/make_track_map.py`로 재생성할 수 있습니다.
 
 # 🌡️ 광주광역시 북구 도심 열환경 및 다차원 기후 취약성 분석
 (Urban Heat Environment and Climate Vulnerability Analysis in Buk-gu, Gwangju)
