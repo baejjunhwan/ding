@@ -21,6 +21,9 @@ python3 track2_grid/02_export_table.py
 python3 track2_grid/03_component_checks.py
 python3 track2_grid/04_map_figure.py
 
+# 수정본 그림: Fig. 1 흐름도, Fig. 3 Track 1(평가 미실시 67개 표시), Fig. 4 Track 2 격자(영문)
+python3 analysis/07_revision_figures.py
+
 # 4. 수정본 Track 1 강건성: 거주지 기준 노출
 python3 track1_residential/01_join.py
 python3 track1_residential/02_compare.py

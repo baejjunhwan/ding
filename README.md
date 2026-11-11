@@ -1,8 +1,8 @@
 | 수정본 Fig. 3 — Track 1 (집계구) | 수정본 Fig. 4 — Track 2 (100m 격자) |
 | :---: | :---: |
-| ![Track 1 우선 검토 집계구](figs/Fig2_Track1.jpg) | ![Track 2 우선 검토 격자](figs/fig5_2_track2_grid.jpg) |
+| ![Track 1 우선 검토 집계구](figs/rev_Fig3_Track1.jpg) | ![Track 2 우선 검토 격자](figs/rev_Fig4_Track2_grid.jpg) |
 
-> **Fig. 3** Track 1 점수를 집계구 중심점(N=832)에 표시하고 상위 10%(n=83)를 원으로 강조하였습니다(`analysis/05_figures.py`). **Fig. 4** Track 2 점수를 주거 지붕 1,000m² 이상 격자(N=1,174)에 4단계로 칠하고, 재건축·신개발 진행 격자 21칸을 따로 표시하였습니다(`track2_grid/04_map_figure.py`). 배경은 Sentinel-2 2025년 실사 영상입니다.
+> **Fig. 3** Track 1 점수를 집계구 중심점(N=832)에 표시하고 상위 10%(n=83)를 원으로, 유효 LST가 없어 평가하지 못한 67개 집계구를 X로 표시하였습니다(`analysis/07_revision_figures.py`). **Fig. 4** Track 2 점수를 주거 지붕 1,000m² 이상 격자(N=1,174)에 4단계로 칠하고, 재건축·신개발 진행 격자 21칸을 따로 표시하였습니다(`analysis/07_revision_figures.py`). 배경은 Sentinel-2 2025년 실사 영상입니다.
 
 # 🌡️ 광주광역시 북구 도시 열 노출 분석과 투트랙 기후적응 우선 검토지역
 (Urban Heat Exposure and Two-Track Climate Adaptation Targeting in Buk-gu, Gwangju)
@@ -66,6 +66,7 @@
 | `04_oa_models_and_tracks.py` | 집계구 OLS·SEM·SLM, LM 검정, Track 1·2 점수, 강건성(MAD·winsorizing·PCA·ΔNDBI 제외·비공개 셀 0 처리) | `data/Bukgu_OA_Master_v3.csv`, `data/z_score_v3.xlsx`, `results/oa_results.json` |
 | `05_figures.py` | Fig. 2·3 (배경 없이: `--no-basemap`) | `figs/Fig2_Track1.jpg`, `figs/Fig3_Track2.png` |
 | `spatial_models.py`, `tm5179.py` | 공간계량 함수(numpy/scipy), EPSG:5179 좌표 변환 | — |
+| `07_revision_figures.py` | **수정본** Fig. 1 연구 흐름도, Fig. 3 Track 1(평가 미실시 67개 집계구 표시), Fig. 4 Track 2 격자(영문) | `figs/rev_Fig1_framework.png`, `figs/rev_Fig3_Track1.jpg`, `figs/rev_Fig4_Track2_grid.jpg` |
 | `06_ndbi_scale_check.py` | **수정본** ΔNDBI 상위 10% 격자의 2020년 상태 비교, 주변 평균·국지 편차 분해 회귀(3.2절) | `results/ndbi_scale_check.json` |
 
 ### Track 2 격자판 (track2_grid/) — 수정본 2.4·3.4·3.5절, Table 10·11, Fig. 4
