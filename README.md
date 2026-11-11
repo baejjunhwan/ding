@@ -1,13 +1,22 @@
-| 원고 Fig. 2 — Track 1 | 원고 Fig. 3 — Track 2 |
+| 수정본 Fig. 3 — Track 1 (집계구) | 수정본 Fig. 4 — Track 2 (100m 격자) |
 | :---: | :---: |
-| ![Track 1 우선 타겟 집계구](figs/Fig2_Track1.jpg) | ![Track 2 우선 타겟 집계구](figs/Fig3_Track2.png) |
+| ![Track 1 우선 검토 집계구](figs/rev_Fig3_Track1.jpg) | ![Track 2 우선 검토 격자](figs/rev_Fig4_Track2_grid.jpg) |
 
-> **Fig. 2 · Fig. 3** 논문에 수록된 그림 파일입니다. Track 점수를 집계구 중심점(N=832)에 색상 단계(2~98 백분위)로 표시하고, 상위 10%(n=83) 집계구를 원으로 강조하였습니다. 배경은 Sentinel-2 2025년 실사 영상이며, `analysis/05_figures.py`로 동일한 파일을 다시 만들 수 있습니다.
+> **Fig. 3** Track 1 점수를 집계구 중심점(N=832)에 표시하고 상위 10%(n=83)를 원으로, 유효 LST가 없어 평가하지 못한 67개 집계구를 X로 표시하였습니다(`analysis/07_revision_figures.py`). **Fig. 4** Track 2 점수를 주거 지붕 1,000m² 이상 격자(N=1,174)에 4단계로 칠하고, 재건축·신개발 진행 격자 21칸을 따로 표시하였습니다(`analysis/07_revision_figures.py`). 배경은 Sentinel-2 2025년 실사 영상입니다.
 
-# 🌡️ 광주광역시 북구 도심 열환경 및 다차원 기후 취약성 분석
-(Urban Heat Environment and Climate Vulnerability Analysis in Buk-gu, Gwangju)
+# 🌡️ 광주광역시 북구 도시 열 노출 분석과 투트랙 기후적응 우선 검토지역
+(Urban Heat Exposure and Two-Track Climate Adaptation Targeting in Buk-gu, Gwangju)
 
-본 저장소는 구글 어스 엔진(Google Earth Engine, GEE) 기반 다중위성 자료와 통계청 집계구 자료를 결합하여 도심 열섬(UHI)의 공간 패턴을 분석하고, 기후위기 적응 정책의 우선순위(투트랙 타겟팅)를 도출한 논문의 분석 코드와 데이터를 제공합니다.
+본 저장소는 위성 지표면온도(Landsat 8)와 식생·시가화 지수, 통계청 집계구 자료, 국토교통부 GIS건물통합정보를 결합하여 북구의 지표면 열 노출을 분석하고, 기후적응 정책의 투트랙 우선 검토지역을 도출한 논문의 분석 코드와 데이터를 제공합니다.
+
+> **📌 2026-11 수정본(1차 심사 반영) 안내**
+> 1. **Track 2 격자판:** Track 2를 집계구·SGIS 노후주택 비율 대신 **100m 격자·노후 주거 지붕 면적**(GIS건물통합정보, 1999년 이전 사용승인)으로 산출합니다. 주거 지붕 1,000m² 이상 격자 1,174칸이 대상이며, 재건축·신개발 진행 격자 21칸(ΔNDBI ≥ 0.10이면서 ΔSAVI ≤ −0.10)은 순위에서 미리 분리합니다 → `track2_grid/`
+> 2. **Track 1 강건성:** 주거용 건물 위 LST로 계산한 거주지 기준 노출로 Track 1을 다시 산출해 비교합니다(ρ = .963, 상위 10% 77/83 일치) → `track1_residential/`
+> 3. **ΔNDBI 부호 점검(3.2절):** ΔNDBI 상위 10% 격자의 2020년 상태 비교와, ΔNDBI를 주변 평균·국지 편차로 나눈 회귀 → `analysis/06_ndbi_scale_check.py`
+> 4. **관측 조건(Table 2):** 연도별 유효 촬영일·관측 횟수 산출 → `gee/table2_scene_counts.js`
+> 5. **투고본 전용 결과:** `analysis/04_oa_models_and_tracks.py`의 집계구판 Track 2와 두 트랙 중첩(14/83), `analysis/05_figures.py`의 `Fig3_Track2.png`는 1차 투고본 결과로 남겨 두었으며 수정본에는 쓰지 않습니다.
+>
+> 1차 투고본(2026-10-13) 상태는 `v1-submitted` 태그에 보존되어 있습니다.
 
 > **📌 2026-10-13 v3 안내 — 논문 수정본의 모든 수치는 v3 기준입니다.**
 > 1. **집계구 물리변수 재산출:** 100m 격자값의 평균 대신 GEE에서 집계구 폴리곤 위 **면적 가중 구역평균**(10m, EPSG:5179)으로 산출하였습니다. 화소 중심점 규칙에서 값이 비던 소면적 집계구가 포함되어 분석 집계구가 **691개 → 832개(북구 인구의 91.4%)** 로 늘었습니다.
@@ -57,6 +66,24 @@
 | `04_oa_models_and_tracks.py` | 집계구 OLS·SEM·SLM, LM 검정, Track 1·2 점수, 강건성(MAD·winsorizing·PCA·ΔNDBI 제외·비공개 셀 0 처리) | `data/Bukgu_OA_Master_v3.csv`, `data/z_score_v3.xlsx`, `results/oa_results.json` |
 | `05_figures.py` | Fig. 2·3 (배경 없이: `--no-basemap`) | `figs/Fig2_Track1.jpg`, `figs/Fig3_Track2.png` |
 | `spatial_models.py`, `tm5179.py` | 공간계량 함수(numpy/scipy), EPSG:5179 좌표 변환 | — |
+| `07_revision_figures.py` | **수정본** Fig. 1 연구 흐름도, Fig. 3 Track 1(평가 미실시 67개 집계구 표시), Fig. 4 Track 2 격자(영문) | `figs/rev_Fig1_framework.png`, `figs/rev_Fig3_Track1.jpg`, `figs/rev_Fig4_Track2_grid.jpg` |
+| `06_ndbi_scale_check.py` | **수정본** ΔNDBI 상위 10% 격자의 2020년 상태 비교, 주변 평균·국지 편차 분해 회귀(3.2절) | `results/ndbi_scale_check.json` |
+
+### Track 2 격자판 (track2_grid/) — 수정본 2.4·3.4·3.5절, Table 10·11, Fig. 4
+| 스크립트 | 내용 | 산출물 |
+| :--- | :--- | :--- |
+| `00_build_grid_table.py` | 격자 정본에 격자별 주거·노후 주거 지붕 면적(`data/buildings/Bukgu_grid100_buildings.tif`) 결합 | `work/t2grid/g.pkl` |
+| `01_scores_and_robustness.py` | 분석 대상(지붕 1,000m² 이상) 선정, 재건축·신개발 격자 분리, Track 2 점수·순위, 민감도 분석 | `results/track2_grid_robustness.json` |
+| `02_export_table.py` | 격자별 지표·점수·순위 표 | `results/Track2_grid.csv` |
+| `03_component_checks.py` | 구성 지표 상관, 층수 조건 등 점검(`data/buildings/Bukgu_grid100_floors.tif`) | `results/track2_component_checks.json` |
+| `04_map_figure.py` | Track 2 격자 지도 | `figs/fig5_2_track2_grid.png/.jpg` |
+
+### Track 1 거주지 기준 노출 (track1_residential/) — 수정본 Table 11
+| 스크립트 | 내용 |
+| :--- | :--- |
+| `01_join.py`, `02_compare.py` | 주거용 건물 위 LST(`data/residential_lst/`)로 Track 1 재산출, 원 순위와 비교 |
+
+GEE 스크립트 추가분: `track2_grid_buildings.js`, `track2_grid_floors.js`(건물 래스터화·격자 합산), `track1_residential_lst.js`(거주지 기준 LST), `table2_scene_counts.js`(Table 2).
 
 ### 그림 (figs/)
 * `Fig1_LST_3D_Topography.jpg`: 원고 Fig. 1 (2025 하절기 Max LST + 3D 지형)
