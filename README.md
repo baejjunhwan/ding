@@ -75,7 +75,7 @@
 | 스크립트 | 내용 | 산출물 |
 | :--- | :--- | :--- |
 | `00_build_grid_table.py` | 격자 정본에 격자별 주거·노후 주거 지붕 면적(`data/buildings/Bukgu_grid100_buildings.tif`) 결합 | `work/t2grid/g.pkl` |
-| `01_scores_and_robustness.py` | 분석 대상(지붕 1,000m² 이상) 선정, 재건축·신개발 격자 분리, Track 2 점수·순위, 민감도 분석 | `results/track2_grid_robustness.json` |
+| `01_scores_and_robustness.py` | 분석 대상(지붕 1,000m² 이상) 선정, 재건축·신개발 격자 분리, Track 2 점수·순위, 민감도 분석 | `results/track2_grid_robustness.json`, `results/Track2_redevelopment_cells.csv`(재건축·신개발 격자 21칸 목록) |
 | `02_export_table.py` | 격자별 지표·점수·순위 표 | `results/Track2_grid.csv` |
 | `03_component_checks.py` | 구성 지표 상관, 층수 조건 등 점검(`data/buildings/Bukgu_grid100_floors.tif`) | `results/track2_component_checks.json` |
 | `04_map_figure.py` | Track 2 격자 지도 | `figs/fig5_2_track2_grid.png/.jpg` |

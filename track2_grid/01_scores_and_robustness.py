@@ -24,6 +24,12 @@ def build(d,old,f=z,use=('n','o','r')):
 ALL=domain('res_h','known_h',1000,drop_dev=False); DEV=ALL[ALL.dev]
 print('dev cells in base domain',len(DEV),DEV.Admin.value_counts().to_dict())
 R0={'dev_n':len(DEV),'dev_dong':DEV.Admin.value_counts().to_dict()}
+# 재건축·신개발 진행 격자 목록(순위 산출 전 분리, 수정본 2.4·3.4절)
+_lo,_la=tm5179.inverse(DEV.cx.values,DEV.cy.values)
+pd.DataFrame({'row_index':DEV.row_index,'col_index':DEV.col_index,'lat':np.round(_la,6),'lon':np.round(_lo,6),
+              'Admin':DEV.Admin,'dNDBI':DEV.dNDBI.round(4),'dSAVI':DEV.dSAVI.round(4),'dRLST':DEV.dRLST.round(3),
+              'old_roof_m2':DEV.old_h.round(1)}).sort_values('dNDBI',ascending=False)\
+  .to_csv('results/Track2_redevelopment_cells.csv',index=False,encoding='utf-8-sig')
 D=domain('res_h','known_h',1000); D['oldA']=D.old_h; D['oldS']=D.old_h/D.known_h
 D['Zn'],D['Zo'],D['Zr']=z(D.dNDBI),z(D.oldA),z(D.dRLST)
 D['score']=D.Zn+D.Zo+D.Zr; D['rank']=D.score.rank(ascending=False,method='min').astype(int)
