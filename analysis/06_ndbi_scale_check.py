@@ -10,14 +10,16 @@ OLS의 ΔNDBI 계수를 다시 검정한다.
 3) 2020년 시가화 수준만 통제한 단순 모형: ΔRLST ~ ΔNDBI + NDBI2020
 4) (탐색, 본문 미사용) ΔNDBI를 주변 평균(k×k 창)과 국지 편차로 나눈 분해 - 군집 표준오차에서는 유의하지 않아
    수정본에서는 근거로 쓰지 않았다(이전 판본의 Table 6).
-SEM 결과는 02_grid_models.py(results/grid_results.json)를 그대로 인용한다.
+5) SEM에 2020년 시가화 수준(NDBI2020)을 추가로 통제(GM, 02_grid_models.py와 같은 추정량)
+SEM 주모형 결과는 02_grid_models.py(results/grid_results.json)를 그대로 인용한다.
 Output: results/ndbi_scale_check.json
 """
 from pathlib import Path
 import json
 import numpy as np
 import pandas as pd
-from scipy import stats
+from scipy import stats, sparse
+from spatial_models import queen_grid, _optim
 
 ROOT = Path(__file__).resolve().parents[1]
 g = pd.read_csv(ROOT / 'data' / 'Bukgu_Grid_Master_v3.csv', dtype={'TOT_OA_CD': str})
@@ -86,6 +88,32 @@ sem = json.load(open(ROOT / 'results' / 'grid_results.json'))
 out['sem_dNDBI'] = {k: dict(B=sem[k]['sem_gm']['b'][4], SE=sem[k]['sem_gm']['se'][4], p=sem[k]['sem_gm']['p'][4])
                     for k in ('main', 'robust_gee_boundary')}
 
+
+
+def gm_error_grid(y, X, W):
+    """02_grid_models.py의 gm_error_grid와 같은 추정량(Arraiz et al. 2010 적률 조건, 이분산 강건 SE)."""
+    n = len(y)
+    WtW = (W.T @ W).tocsr()
+    A1 = WtW - sparse.diags(WtW.diagonal())
+    u = y - X @ np.linalg.lstsq(X, y, rcond=None)[0]
+    A1u, wu = A1 @ u, W @ u
+    g_ = np.array([u @ A1u, u @ wu]) / n
+    G = np.array([[2 * (wu @ A1u), -(wu @ (A1 @ wu))], [wu @ ((W + W.T) @ u), -(wu @ (W @ wu))]]) / n
+    lam = _optim(G, g_)
+    xs, ys = X - lam * (W @ X), y - lam * (W @ y)
+    XtXi = np.linalg.inv(xs.T @ xs)
+    b = XtXi @ xs.T @ ys
+    ef = (y - X @ b) - lam * (W @ (y - X @ b))
+    se = np.sqrt(np.diag(XtXi @ ((xs * (ef ** 2)[:, None]).T @ xs) @ XtXi))
+    return b, se, 2 * stats.norm.sf(np.abs(b / se)), lam
+
+
+cols5 = MAIN + ['NDBI20']
+b5, se5, p5, lam5 = gm_error_grid(g.dRLST.values, np.column_stack([np.ones(len(g))] + [g[c] for c in cols5]),
+                                  queen_grid(g.col_index.values, g.row_index.values))
+out['sem_with_NDBI2020'] = {c: dict(B=float(b5[i + 1]), SE=float(se5[i + 1]), p=float(p5[i + 1])) for i, c in enumerate(cols5)}
+out['sem_with_NDBI2020']['lambda'] = float(lam5)
+
 (ROOT / 'results' / 'ndbi_scale_check.json').write_text(json.dumps(out, ensure_ascii=False, indent=1))
 
 for key in ('main', 'boundary_excluded', 'simple_NDBI2020'):
@@ -99,3 +127,5 @@ for win, m in out['exploratory_decomposition'].items():
 print(f"주거 격자 r(ΔNDBI, ΔRLST) = {r:.3f} (N = {len(t2):,}, p = {p:.2g})")
 for k, v in out['sem_dNDBI'].items():
     print(f"SEM {k}: ΔNDBI B = {v['B']:.3f} (SE {v['SE']:.3f}, p = {v['p']:.2g})")
+c = out['sem_with_NDBI2020']['dNDBI']
+print(f"SEM + NDBI2020: ΔNDBI B = {c['B']:.3f} (SE {c['SE']:.3f}, p = {c['p']:.2g})")

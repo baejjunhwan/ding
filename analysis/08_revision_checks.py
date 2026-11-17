@@ -102,6 +102,16 @@ m = ml_error(y, Xm, Wq)
 out['savi_may_sep_mean']['sem'] = {nm: dict(B=float(m['coef'][i]), SE=float(m['se'][i]), p=float(m['p'][i]))
                                    for i, nm in enumerate(names)}
 
+# ---- 5) 시가화 수준 통제: NDBI2020(기저) 또는 NDBI2025(현재)를 추가한 집계구 SEM ------------------
+# NDBI2025 = NDBI2020 + ΔNDBI 이므로 두 모형은 같은 모형이다(고령인구 계수 동일). 다만 ΔNDBI 계수의 뜻이 달라서,
+# NDBI2020 통제 시에는 "같은 기저 수준에서 더 개발된 곳", NDBI2025 통제 시에는 "같은 현재 수준에서 기저가 낮았던 곳"을 비교한다.
+out['sem_built_up_level'] = {}
+for lv in ('NDBI20', 'NDBI25'):
+    Xl = np.column_stack([Xo, d[lv]])
+    m = ml_error(y, Xl, Wq)
+    out['sem_built_up_level'][lv] = {nm: dict(B=float(m['coef'][i]), SE=float(m['se'][i]), p=float(m['p'][i]))
+                                     for i, nm in enumerate(names + [lv])}
+
 (ROOT / 'results').mkdir(exist_ok=True)
 (ROOT / 'results' / 'revision_checks.json').write_text(json.dumps(out, ensure_ascii=False, indent=1, default=float))
 
@@ -119,3 +129,6 @@ sv = out['savi_may_sep_mean']
 print(f"SAVI 5~9월 평균 합성: 최댓값 합성과 r = {sv['r_with_max_composite']:.3f};  SEM 고령인구 B = "
       f"{sv['sem']['Elderly_Ratio']['B']:.4f} (p = {sv['sem']['Elderly_Ratio']['p']:.2g}), ΔNDBI B = "
       f"{sv['sem']['dNB_mean']['B']:.3f} (p = {sv['sem']['dNB_mean']['p']:.2g}), SAVI B = {sv['sem']['SAVI2025']['B']:.3f}")
+for lv, m in out['sem_built_up_level'].items():
+    print(f"SEM + {lv}: ΔNDBI B = {m['dNB_mean']['B']:.3f} (p = {m['dNB_mean']['p']:.2g}), 고령인구 B = "
+          f"{m['Elderly_Ratio']['B']:.4f} (p = {m['Elderly_Ratio']['p']:.2g}), {lv} B = {m[lv]['B']:.3f}")
