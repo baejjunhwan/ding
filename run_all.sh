@@ -13,6 +13,7 @@ python3 analysis/05_figures.py
 
 # 2. 수정본 3.2절: ΔNDBI 부호 차이 점검(상위 10% 비교, 스케일 분해)
 python3 analysis/06_ndbi_scale_check.py
+python3 analysis/08_revision_checks.py
 
 # 3. 수정본 Track 2 격자판(100 m 격자, 건물 지붕 면적, 재건축·신개발 격자 분리)
 python3 track2_grid/00_build_grid_table.py

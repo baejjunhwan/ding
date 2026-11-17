@@ -12,9 +12,10 @@
 > **📌 2026-11 수정본(1차 심사 반영) 안내**
 > 1. **Track 2 격자판:** Track 2를 집계구·SGIS 노후주택 비율 대신 **100m 격자·노후 주거 지붕 면적**(GIS건물통합정보, 1999년 이전 사용승인)으로 산출합니다. 주거 지붕 1,000m² 이상 격자 1,174칸이 대상이며, 재건축·신개발 진행 격자 21칸(ΔNDBI ≥ 0.10이면서 ΔSAVI ≤ −0.10)은 순위에서 미리 분리합니다 → `track2_grid/`
 > 2. **Track 1 강건성:** 주거용 건물 위 LST로 계산한 거주지 기준 노출로 Track 1을 다시 산출해 비교합니다(ρ = .963, 상위 10% 77/83 일치) → `track1_residential/`
-> 3. **ΔNDBI 부호 점검(3.2절):** ΔNDBI 상위 10% 격자의 2020년 상태 비교와, ΔNDBI를 주변 평균·국지 편차로 나눈 회귀 → `analysis/06_ndbi_scale_check.py`
-> 4. **관측 조건(Table 2):** 연도별 유효 촬영일·관측 횟수 산출 → `gee/table2_scene_counts.js`
-> 5. **투고본 전용 결과:** `analysis/04_oa_models_and_tracks.py`의 집계구판 Track 2와 두 트랙 중첩(14/83), `analysis/05_figures.py`의 `Fig3_Track2.png`는 1차 투고본 결과로 남겨 두었으며 수정본에는 쓰지 않습니다.
+> 3. **ΔNDBI 부호 점검(3.2절):** 집계구(707개) 군집 강건 표준오차로 격자 OLS의 ΔNDBI 계수 재검정(B = −0.948, SE = 2.766, p = .732), 경계부 제외·NDBI2020 통제 모형, 주거 격자 상관. 스케일 분해(주변 평균·국지 편차)는 군집 SE에서 유의하지 않아 수정본에 싣지 않았고 탐색 결과로만 남김 → `analysis/06_ndbi_scale_check.py`
+> 4. **재심 전 점검(2.3·2.4·2.5·3.3절):** LST–고령인구 단순상관(r = .275), 인구가중 고령인구 비율(18.2%), 평가 미실시 67개 집계구와 분석 대상 비교(고도·NDBI·SAVI, 추정 LST), 공간가중행렬 민감도(k-최근접 4·6·8), SAVI 5~9월 평균 합성 민감도 → `analysis/08_revision_checks.py`
+> 5. **관측 조건(Table 2):** 연도별 유효 촬영일·관측 횟수 산출 → `gee/table2_scene_counts.js`
+> 6. **투고본 전용 결과:** `analysis/04_oa_models_and_tracks.py`의 집계구판 Track 2와 두 트랙 중첩(14/83), `analysis/05_figures.py`의 `Fig3_Track2.png`는 1차 투고본 결과로 남겨 두었으며 수정본에는 쓰지 않습니다.
 >
 > 1차 투고본(2026-10-13) 상태는 `v1-submitted` 태그에 보존되어 있습니다.
 
@@ -67,7 +68,8 @@
 | `05_figures.py` | Fig. 2·3 (배경 없이: `--no-basemap`) | `figs/Fig2_Track1.jpg`, `figs/Fig3_Track2.png` |
 | `spatial_models.py`, `tm5179.py` | 공간계량 함수(numpy/scipy), EPSG:5179 좌표 변환 | — |
 | `07_revision_figures.py` | **수정본** Fig. 1 연구 흐름도, Fig. 3 Track 1(평가 미실시 67개 집계구 표시), Fig. 4 Track 2 격자(영문) | `figs/rev_Fig1_framework.png`, `figs/rev_Fig3_Track1.jpg`, `figs/rev_Fig4_Track2_grid.jpg` |
-| `06_ndbi_scale_check.py` | **수정본** ΔNDBI 상위 10% 격자의 2020년 상태 비교, 주변 평균·국지 편차 분해 회귀(3.2절) | `results/ndbi_scale_check.json` |
+| `06_ndbi_scale_check.py` | **수정본** 격자 OLS ΔNDBI의 집계구 군집 강건 표준오차, 경계부 제외·NDBI2020 통제 모형, (탐색) 스케일 분해(3.2절, Table 5 주) | `results/ndbi_scale_check.json` |
+| `08_revision_checks.py` | **수정본** r(LST, 고령인구), 인구가중 비율, 평가 미실시 67개 비교, 공간가중행렬 민감도, SAVI 합성 민감도(2.3·2.4·2.5·3.3절) | `results/revision_checks.json` |
 
 ### Track 2 격자판 (track2_grid/) — 수정본 2.4·3.4·3.5절, Table 10·11, Fig. 4
 | 스크립트 | 내용 | 산출물 |
@@ -78,7 +80,7 @@
 | `03_component_checks.py` | 구성 지표 상관, 층수 조건 등 점검(`data/buildings/Bukgu_grid100_floors.tif`) | `results/track2_component_checks.json` |
 | `04_map_figure.py` | Track 2 격자 지도 | `figs/fig5_2_track2_grid.png/.jpg` |
 
-### Track 1 거주지 기준 노출 (track1_residential/) — 수정본 Table 11
+### Track 1 거주지 기준 노출 (track1_residential/) — 수정본 Table 11(민감도)
 | 스크립트 | 내용 |
 | :--- | :--- |
 | `01_join.py`, `02_compare.py` | 주거용 건물 위 LST(`data/residential_lst/`)로 Track 1 재산출, 원 순위와 비교 |

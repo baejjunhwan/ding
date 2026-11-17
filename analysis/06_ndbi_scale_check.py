@@ -1,10 +1,16 @@
 """Step 6 - ΔNDBI 부호 차이 점검 (수정본 3.2절, 심사의견 2-1 대응).
 
-격자 OLS에서 ΔNDBI 계수는 음(−), 공간오차모형에서는 양(+)이다. 이를 두 가지로 점검한다.
-1) ΔNDBI 상위 10% 격자와 나머지 격자의 2020년 상태 비교
-   - "개발이 2020년에 서늘하고 식생이 많던 외곽에 집중되었다"는 설명이 성립하는지 확인
-2) ΔNDBI(와 ΔSAVI)를 주변 평균(k×k 창, 자기 자신 제외)과 국지 편차(자기 값 − 주변 평균)로
-   나누어 같은 통제변수로 OLS 재추정 - 두 계수의 부호가 서로 다른 공간 스케일에서 오는지 확인
+격자 OLS에서 ΔNDBI 계수는 음(−0.948), 공간오차모형(SEM)에서는 양(+3.289)이다.
+격자 OLS 잔차는 강한 공간자기상관(Moran's I = .816)을 보이므로 일반 OLS 표준오차는 과소 추정된다.
+여기서는 집계구(707개)를 군집으로 한 강건 표준오차(CR1; 집계구가 배정되지 않은 격자는 별도 군집 1개)로
+OLS의 ΔNDBI 계수를 다시 검정한다.
+
+1) 주모형(N = 11,752): ΔRLST ~ RLST2020 + ΔSAVI + SAVI2020 + ΔNDBI + DEM
+2) 읍면동 경계부 격자를 제외한 표본(N = 11,370)
+3) 2020년 시가화 수준만 통제한 단순 모형: ΔRLST ~ ΔNDBI + NDBI2020
+4) (탐색, 본문 미사용) ΔNDBI를 주변 평균(k×k 창)과 국지 편차로 나눈 분해 - 군집 표준오차에서는 유의하지 않아
+   수정본에서는 근거로 쓰지 않았다(이전 판본의 Table 6).
+SEM 결과는 02_grid_models.py(results/grid_results.json)를 그대로 인용한다.
 Output: results/ndbi_scale_check.json
 """
 from pathlib import Path
@@ -15,21 +21,44 @@ from scipy import stats
 
 ROOT = Path(__file__).resolve().parents[1]
 g = pd.read_csv(ROOT / 'data' / 'Bukgu_Grid_Master_v3.csv', dtype={'TOT_OA_CD': str})
-out = {'n': len(g)}
+g['cluster'] = g.TOT_OA_CD.fillna('NONE').replace('', 'NONE')
 
-# 1) 상위 10% 비교
-cut = g.dNDBI.quantile(0.9)
-top = g.dNDBI >= cut
-comp = {}
-for v in ['RLST2020', 'SAVI2020', 'NDBI20', 'DEM', 'dRLST', 'dSAVI']:
-    a, b = g.loc[top, v], g.loc[~top, v]
-    comp[v] = dict(top=round(a.mean(), 4), rest=round(b.mean(), 4), diff=round(a.mean() - b.mean(), 4),
-                   welch_p=float(stats.ttest_ind(a, b, equal_var=False).pvalue))
-q = pd.qcut(g.NDBI20, 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
-out['top10'] = dict(cutoff=round(cut, 4), n_top=int(top.sum()), compare=comp,
-                    share_by_NDBI2020_quartile=q[top].value_counts(normalize=True).sort_index().round(3).to_dict())
 
-# 2) 스케일 분해
+def ols_cluster(df, cols):
+    """OLS 계수와 일반 SE, 집계구 군집 강건 SE(CR1: G/(G-1)·(n-1)/(n-k), t(G-1) 분포)."""
+    df = df.dropna(subset=cols + ['dRLST'])
+    X = np.column_stack([np.ones(len(df))] + [df[c].values for c in cols])
+    y = df.dRLST.values
+    n, k = X.shape
+    XtXi = np.linalg.inv(X.T @ X)
+    b = XtXi @ X.T @ y
+    e = y - X @ b
+    se_ols = np.sqrt(np.diag(e @ e / (n - k) * XtXi))
+    cl = df.cluster.values
+    G = len(np.unique(cl))
+    meat = np.zeros((k, k))
+    for c in np.unique(cl):
+        m = cl == c
+        s = X[m].T @ e[m]
+        meat += np.outer(s, s)
+    V = XtXi @ meat @ XtXi * G / (G - 1) * (n - 1) / (n - k)
+    se_cl = np.sqrt(np.diag(V))
+    res = {}
+    for i, c in enumerate(cols):
+        res[c] = dict(B=float(b[i + 1]), SE_ols=float(se_ols[i + 1]),
+                      p_ols=float(2 * stats.t.sf(abs(b[i + 1] / se_ols[i + 1]), n - k)),
+                      SE_cluster=float(se_cl[i + 1]),
+                      p_cluster=float(2 * stats.t.sf(abs(b[i + 1] / se_cl[i + 1]), G - 1)))
+    return dict(n=int(n), clusters=int(G), coef=res)
+
+
+MAIN = ['RLST2020', 'dSAVI', 'SAVI2020', 'dNDBI', 'DEM']
+out = {'main': ols_cluster(g, MAIN)}
+strict = g[g.center_in_GEE_boundary.astype(str).str.lower() == 'true']
+out['boundary_excluded'] = ols_cluster(strict, MAIN)
+out['simple_NDBI2020'] = ols_cluster(g, ['dNDBI', 'NDBI20'])
+
+# 4) 탐색: 주변 평균/국지 편차 분해
 pos = {(r, c): i for i, (r, c) in enumerate(zip(g.row_index, g.col_index))}
 
 
@@ -43,39 +72,30 @@ def neigh_mean(col, h):
     return res
 
 
-def ols(cols):
-    d = g.dropna(subset=cols)
-    X = np.column_stack([np.ones(len(d))] + [d[c] for c in cols])
-    y = d.dRLST.values
-    b = np.linalg.lstsq(X, y, rcond=None)[0]
-    e = y - X @ b
-    n, k = X.shape
-    se = np.sqrt(np.diag(e @ e / (n - k) * np.linalg.inv(X.T @ X)))
-    p = 2 * stats.t.sf(np.abs(b / se), n - k)
-    return {c: dict(B=round(float(b[i + 1]), 4), SE=round(float(se[i + 1]), 4), p=float(p[i + 1]))
-            for i, c in enumerate(cols)}
-
-
-ctrl = ['RLST2020', 'SAVI2020', 'DEM']
-out['scale_decomposition'] = {}
+out['exploratory_decomposition'] = {}
 for k in (3, 11):
-    h = k // 2
-    for v in ['dNDBI', 'dSAVI']:
-        g[f'nb_{v}'] = neigh_mean(v, h)
-        g[f'loc_{v}'] = g[v] - g[f'nb_{v}']
-    out['scale_decomposition'][f'{k}x{k}_cells_{k * 100}m'] = {
-        'no_controls': ols(['nb_dNDBI', 'loc_dNDBI']),
-        'controls_dSAVI_whole': ols(ctrl + ['dSAVI', 'nb_dNDBI', 'loc_dNDBI']),
-        'controls_dSAVI_decomposed': ols(ctrl + ['nb_dNDBI', 'loc_dNDBI', 'nb_dSAVI', 'loc_dSAVI']),
-    }
+    g['nb_dNDBI'] = neigh_mean('dNDBI', k // 2)
+    g['loc_dNDBI'] = g.dNDBI - g.nb_dNDBI
+    out['exploratory_decomposition'][f'{k}x{k}'] = ols_cluster(g, ['RLST2020', 'SAVI2020', 'DEM', 'dSAVI', 'nb_dNDBI', 'loc_dNDBI'])
 
-(ROOT / 'results').mkdir(exist_ok=True)
+# 주거 격자(Track 2 대상)의 단순상관
+t2 = pd.read_csv(ROOT / 'results' / 'Track2_grid.csv')
+r, p = stats.pearsonr(t2.dNDBI, t2.dRLST)
+out['track2_residential_r'] = dict(n=len(t2), r=r, p=p)
+sem = json.load(open(ROOT / 'results' / 'grid_results.json'))
+out['sem_dNDBI'] = {k: dict(B=sem[k]['sem_gm']['b'][4], SE=sem[k]['sem_gm']['se'][4], p=sem[k]['sem_gm']['p'][4])
+                    for k in ('main', 'robust_gee_boundary')}
+
 (ROOT / 'results' / 'ndbi_scale_check.json').write_text(json.dumps(out, ensure_ascii=False, indent=1))
 
-print(f"N = {out['n']:,};  ΔNDBI 상위 10% 기준 {cut:.4f} (n = {int(top.sum())})")
-for v, r in comp.items():
-    print(f"  {v:9s} 상위 {r['top']:9.3f}  나머지 {r['rest']:9.3f}  차이 {r['diff']:8.3f}  p = {r['welch_p']:.2g}")
-for win, models in out['scale_decomposition'].items():
-    for m, res in models.items():
-        nb, lc = res['nb_dNDBI'], res['loc_dNDBI']
-        print(f"  [{win} | {m}] 주변 평균 B = {nb['B']:.3f} (p = {nb['p']:.2g}), 국지 편차 B = {lc['B']:.3f} (p = {lc['p']:.2g})")
+for key in ('main', 'boundary_excluded', 'simple_NDBI2020'):
+    c = out[key]['coef']['dNDBI']
+    print(f"{key:18s} N = {out[key]['n']:,} (군집 {out[key]['clusters']})  ΔNDBI B = {c['B']:.3f}  "
+          f"일반 SE {c['SE_ols']:.3f} (p = {c['p_ols']:.3f})  군집 SE {c['SE_cluster']:.3f} (p = {c['p_cluster']:.3f})")
+for win, m in out['exploratory_decomposition'].items():
+    a, b = m['coef']['nb_dNDBI'], m['coef']['loc_dNDBI']
+    print(f"[탐색 {win}] 주변 평균 B = {a['B']:.3f} (군집 SE {a['SE_cluster']:.3f}, p = {a['p_cluster']:.3f}), "
+          f"국지 편차 B = {b['B']:.3f} (군집 SE {b['SE_cluster']:.3f}, p = {b['p_cluster']:.3f})")
+print(f"주거 격자 r(ΔNDBI, ΔRLST) = {r:.3f} (N = {len(t2):,}, p = {p:.2g})")
+for k, v in out['sem_dNDBI'].items():
+    print(f"SEM {k}: ΔNDBI B = {v['B']:.3f} (SE {v['SE']:.3f}, p = {v['p']:.2g})")
