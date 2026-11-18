@@ -11,7 +11,7 @@ python3 analysis/03_build_oa_master.py
 python3 analysis/04_oa_models_and_tracks.py
 python3 analysis/05_figures.py
 
-# 2. 수정본 3.2절: ΔNDBI 부호 차이 점검(상위 10% 비교, 스케일 분해)
+# 2. 수정본 3.2절·재심 전 점검: ΔNDBI 군집 강건 표준오차·시가화 수준 통제, 67개 집계구 비교, 가중행렬·SAVI 민감도
 python3 analysis/06_ndbi_scale_check.py
 python3 analysis/08_revision_checks.py
 
