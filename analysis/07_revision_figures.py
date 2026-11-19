@@ -173,7 +173,7 @@ box(7, 82, 27, 19, 'GIS building database', ['Residential buildings', 'approved 
 box(38, 82, 28, 19, 'Satellite (GEE)', ['Landsat 8: LST, NDBI', 'Sentinel-2: SAVI', 'SRTM: DEM'], fc=FILL)
 box(70, 82, 28, 19, 'SGIS output areas', ['Elderly ratio (65+)', 'Aged-housing ratio', '919 → 832 analysed'], fc=FILL)
 
-box(7, 46, 42, 30, 'RQ1  Grid model (100 m, N = 11,752)', ['DV: ΔRLST (2020→2025)', 'IV: ΔSAVI, ΔNDBI, SAVI2020,', 'DEM, RLST2020', 'OLS → Moran\'s I → SEM (GM)', 'ΔNDBI scale decomposition'])
+box(7, 46, 42, 30, 'RQ1  Grid model (100 m, N = 11,752)', ['DV: ΔRLST (2020→2025)', 'IV: ΔSAVI, ΔNDBI, SAVI2020,', 'DEM, RLST2020', 'OLS → Moran\'s I → LM tests → SEM (GM)', 'OLS ΔNDBI: cluster-robust SE'])
 box(56, 46, 42, 30, 'RQ2  Output-area model (N = 832)', ['DV: 2025 summer LST', 'IV: elderly ratio, aged housing,', 'ΔNDBI; controls SAVI, DEM', 'OLS → LM tests → SEM / SLM', 'Final: SEM'])
 
 box(7, 9, 42, 31, 'Track 2  Mid- to long-term retrofit', ['100 m residential grid (N = 1,174)', 'Z(ΔNDBI) + Z(aged roof) + Z(ΔRLST)', 'Redevelopment cells (21) separated', 'Top 10%: 117 cells', 'Cool roofs, greening, paving'], ec=ACC2, lw=1.8)
