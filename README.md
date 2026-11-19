@@ -11,7 +11,7 @@
 
 > **📌 2026-11 수정본(1차 심사 반영) 안내**
 > 1. **Track 2 격자판:** Track 2를 집계구·SGIS 노후주택 비율 대신 **100m 격자·노후 주거 지붕 면적**(GIS건물통합정보, 1999년 이전 사용승인)으로 산출합니다. 주거 지붕 1,000m² 이상 격자 1,174칸이 대상이며, 재건축·신개발 진행 격자 21칸(ΔNDBI ≥ 0.10이면서 ΔSAVI ≤ −0.10)은 순위에서 미리 분리합니다 → `track2_grid/`
-> 2. **Track 1 강건성:** 주거용 건물 위 LST로 계산한 거주지 기준 노출로 Track 1을 다시 산출해 비교합니다(ρ = .963, 상위 10% 77/83 일치) → `track1_residential/`
+> 2. **Track 1 강건성:** 주거용 건물(단독·공동주택) 지붕이 덮은 부분의 LST만으로 평균한 거주지 기준 LST로 Track 1을 다시 산출해 비교합니다(ρ = .963, 상위 10% 77/83 일치) → `track1_residential/`
 > 3. **ΔNDBI 부호 점검(3.2절):** 집계구(707개) 군집 강건 표준오차로 격자 OLS의 ΔNDBI 계수 재검정(B = −0.948, SE = 2.766, p = .732), 경계부 제외·NDBI2020 통제 모형, 주거 격자 상관. 스케일 분해(주변 평균·국지 편차)는 군집 SE에서 유의하지 않아 수정본에 싣지 않았고 탐색 결과로만 남김 → `analysis/06_ndbi_scale_check.py`
 > 4. **재심 전 점검(2.3·2.4·2.5·3.3절):** LST–고령인구 단순상관(r = .275), 인구가중 고령인구 비율(18.2%), 평가 미실시 67개 집계구와 분석 대상 비교(고도·NDBI·SAVI, 추정 LST), 공간가중행렬 민감도(k-최근접 4·6·8), SAVI 5~9월 평균 합성 민감도 → `analysis/08_revision_checks.py`
 > 5. **관측 조건(Table 2):** 연도별 유효 촬영일·관측 횟수 산출 → `gee/table2_scene_counts.js`
@@ -80,7 +80,7 @@
 | `03_component_checks.py` | 구성 지표 상관, 층수 조건 등 점검(`data/buildings/Bukgu_grid100_floors.tif`) | `results/track2_component_checks.json` |
 | `04_map_figure.py` | Track 2 격자 지도 | `figs/fig5_2_track2_grid.png/.jpg` |
 
-### Track 1 거주지 기준 노출 (track1_residential/) — 수정본 Table 11(민감도)
+### Track 1 거주지 기준 LST (track1_residential/) — 수정본 Table 11(민감도)
 | 스크립트 | 내용 |
 | :--- | :--- |
 | `01_join.py`, `02_compare.py` | 주거용 건물 위 LST(`data/residential_lst/`)로 Track 1 재산출, 원 순위와 비교 |
@@ -95,24 +95,24 @@ GEE 스크립트 추가분: `track2_grid_buildings.js`, `track2_grid_floors.js`(
 ## 📊 데이터 명세서 (Data Dictionary) — `Bukgu_OA_Master_v3.csv`
 모든 물리 변수는 집계구 폴리곤과 화소가 겹치는 면적으로 가중한 구역평균입니다.
 
-| 변수명 | 설명 | 취약성 지표 |
+| 변수명 | 설명 | 지표 역할 (IPCC AR6) |
 | :--- | :--- | :--- |
 | `TOT_OA_CD`, `ADM_CD`, `Admin` | 집계구 코드(14자리), 행정동 코드, 행정동명 | - |
 | `cx`, `cy` | 집계구 중심 좌표 (EPSG:5179) | - |
-| `Abs_mean` | 2025년 하절기 평균 절대 지표면온도 (℃) | 노출도 (Track 1) |
-| `dRL_mean` | 2020→2025 상대 지표면온도 변화량 (ΔRLST) | 노출도 (Track 2) |
-| `dNB_mean` | 2020→2025 건물 밀도 변화량 (ΔNDBI, 반사율 기준) | 노출도 (Track 2) |
+| `Abs_mean` | 2025년 하절기 평균 지표면온도 (LST, ℃) | 위해 강도 (Track 1) |
+| `dRL_mean` | 2020→2025 상대 지표면온도 변화량 (ΔRLST) | 위해의 변화 (투고본 집계구판 Track 2) |
+| `dNB_mean` | 2020→2025 시가화 변화 (ΔNDBI, 반사율 기준; 건물 밀도를 직접 측정하지 않음) | 개발 압력 (투고본 집계구판 Track 2) |
 | `SAVI` | 2025년 토양조정 식생지수 (5~10월 최댓값 합성) | 통제변수 |
 | `DEM` | 평균 해발고도 (m) | 통제변수 |
-| `Elderly_Ratio` | 고령 인구 비율 (%) = 65세 이상 / 총인구 × 100 | 민감도 (Track 1) |
-| `Old_housing_Ratio` | 노후 주택 비율 (%) = 1999년 이전 건축 주택 / 전체 주택 × 100 | 적응 능력 (Track 2) |
+| `Elderly_Ratio` | 고령 인구 비율 (%) = 65세 이상 / 총인구 × 100 | 민감성 (Track 1) |
+| `Old_housing_Ratio` | 노후 주택 비율 (%) = 1999년 이전 건축 주택 / 전체 주택 × 100 | 적응능력 부족 (투고본 집계구판 Track 2; 수정본 Track 2는 격자별 노후 주거 지붕 면적) |
 | `to_in_001`, `eld65`, `house_old`, `house_tot` | 총인구, 65세 이상 인구, 노후 주택 수, 전체 주택 수 | - |
 | `valid20`, `valid25` | 집계구 면적 중 유효 지표면온도 화소 비율 | - |
 | `Z_*` | 각 지표의 Z-점수 (N=832 기준) | - |
 | `Track1_Score`, `Track2_Score` | Track 1·2 Z-점수 합산 | - |
 | `Track1_Rank`, `Track2_Rank`, `Track1_Top10`, `Track2_Top10` | 순위와 상위 10%(83개) 여부 | - |
 
-> *Track 1 = `Z_Abs` + `Z_Elderly` / Track 2 = `Z_dNB` + `Z_Old` + `Z_dRL`*
+> *Track 1 = `Z_Abs` + `Z_Elderly` / (투고본 집계구판) Track 2 = `Z_dNB` + `Z_Old` + `Z_dRL`. 수정본 Track 2는 `track2_grid/`의 100m 격자 결과(`results/Track2_grid.csv`)를 사용합니다.*
 
 ## 📈 논문 대응 주요 결과 (v3)
 
@@ -120,14 +120,14 @@ GEE 스크립트 추가분: `track2_grid_buildings.js`, `track2_grid_floors.js`(
 | :--- | :--- |
 | 격자 회귀 (3.2절, N=11,752) | R² = .175, F(5, 11746) = 497.9, 최대 VIF 4.29 |
 | 격자 OLS 계수 | ΔSAVI −6.564\*\*\*, SAVI2020 −8.426\*\*\*, RLST2020 −0.251\*\*\*, ΔNDBI −0.948\*, DEM 3.41e-6 (ns) |
-| 격자 공간오차모형 (GM) | 잔차 Moran's I .816 → λ = .938, ΔSAVI −1.387\*\*\*, SAVI2020 −0.975\*\*\*, ΔNDBI 3.289\*\*\* |
+| 격자 공간오차모형 (GM) | 잔차 Moran's I .816 → λ = .938, ΔSAVI −1.387\*\*\*, SAVI2020 −0.974\*\*\*, ΔNDBI 3.289\*\*\* |
 | 경계 격자 추가 제외 (N=11,370) | OLS ΔNDBI −0.147 (p = .758), 공간오차모형 ΔNDBI 3.215\*\*\* |
 | 집계구 회귀 (3.3절, N=832) | R² = .595, F(5, 826) = 242.5, 최대 VIF 1.65 |
 | 집계구 OLS 계수 | ΔNDBI 6.762\*\*\*, 고령비율 0.0709\*\*\*, 노후주택 −0.0036\*, SAVI −23.025\*\*\*, DEM −0.0131\*\*\* |
 | 집계구 공간모형 | 잔차 Moran's I .508 → SEM λ = .886 (AIC 2579), SLM ρ = .655 (AIC 2636), OLS AIC 3289; SEM 잔차 I = −.031 (p = .159) |
-| 무조건부 상관 | r(절대온도, 고령비율) = .275, r(절대온도, 노후주택) = .226, r(ΔNDBI, ΔRLST) = .308 |
-| r(Track 1, Track 2) | .526, 상위 10% 중첩 14/83 (16.9%) |
-| Track 2 강건성 (ρ, 상위 10% 중첩) | MAD .982 (91.6%) / winsorizing .993 (94.0%) / PCA .992 (98.8%) / ΔNDBI 제외 .906 (66.3%) / 비공개 셀 0 처리 .995 (97.6%) |
+| 무조건부 상관 | r(LST, 고령비율) = .275, r(LST, 노후주택) = .226, r(ΔNDBI, ΔRLST) = .308 |
+| r(Track 1, Track 2) *(투고본 집계구판, 수정본 미사용)* | .526, 상위 10% 중첩 14/83 (16.9%) |
+| Track 2 강건성 *(투고본 집계구판; 수정본은 `results/track2_grid_robustness.json`)* (ρ, 상위 10% 중첩) | MAD .982 (91.6%) / winsorizing .993 (94.0%) / PCA .992 (98.8%) / ΔNDBI 제외 .906 (66.3%) / 비공개 셀 0 처리 .995 (97.6%) |
 | Track 1 강건성 (ρ, 상위 10% 중첩) | MAD 1.000 (98.8%) / winsorizing .992 (83.1%) |
 
 ## ⚙️ 재현 방법 (Reproduction)

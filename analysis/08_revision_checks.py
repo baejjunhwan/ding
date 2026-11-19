@@ -112,6 +112,39 @@ for lv in ('NDBI20', 'NDBI25'):
     out['sem_built_up_level'][lv] = {nm: dict(B=float(m['coef'][i]), SE=float(m['se'][i]), p=float(m['p'][i]))
                                      for i, nm in enumerate(names + [lv])}
 
+# ---- 6) 격자 모형 OLS 잔차의 LM 검정(희소 행렬 계산; 수정본 2.5·3.2절) ------------------------------
+from scipy import sparse
+from spatial_models import queen_grid, ols as ols_
+
+
+def lm_sparse(y, X, W):
+    """spatial_models.lm_tests와 같은 식을 희소 행렬로 계산한다(집계구 모형에서 값이 일치함을 확인)."""
+    W = sparse.csr_matrix(W)
+    b = np.linalg.lstsq(X, y, rcond=None)[0]; e = y - X @ b; s2 = e @ e / len(y)
+    XtXi = np.linalg.inv(X.T @ X); Mv = lambda v: v - X @ (XtXi @ (X.T @ v))
+    T = W.multiply(W).sum() + W.multiply(W.T).sum()
+    WXb = W @ (X @ b); Dd = (WXb @ Mv(WXb)) / s2 + T
+    eWe, eWy = e @ (W @ e) / s2, e @ (W @ y) / s2
+    r = {'LM-error': eWe ** 2 / T, 'LM-lag': eWy ** 2 / Dd,
+         'Robust LM-error': (eWe - T / Dd * eWy) ** 2 / (T - T ** 2 / Dd), 'Robust LM-lag': (eWy - eWe) ** 2 / (Dd - T)}
+    return {k: dict(stat=float(v), p=float(stats.chi2.sf(v, 1))) for k, v in r.items()}
+
+
+g = pd.read_csv(D / 'Bukgu_Grid_Master_v3.csv', dtype={'TOT_OA_CD': str})
+Xg = np.column_stack([np.ones(len(g)), g.RLST2020, g.dSAVI, g.SAVI2020, g.dNDBI, g.DEM])
+out['grid_lm_tests'] = lm_sparse(g.dRLST.values, Xg, queen_grid(g.col_index.values, g.row_index.values))
+out['oa_lm_tests_check'] = lm_sparse(y, Xo, Wq)
+
+# ---- 7) 주택 비공개 셀(1~4호)을 2.5 대신 0으로 대체했을 때의 집계구 SEM(수정본 2.4절) ----------------------
+h = pd.read_csv(D / 'sgis_2024_housing_by_year.csv', header=None, names=['yr', 'oa', 'code', 'cnt'], dtype=str)
+h['n'] = pd.to_numeric(h.cnt, errors='coerce').fillna(0)
+old0 = h[h.code.isin(['ho_yr_001', 'ho_yr_002', 'ho_yr_003'])].groupby('oa').n.sum()
+tot0 = h.groupby('oa').n.sum()
+ratio0 = (100 * old0.reindex(d.index).fillna(0) / tot0.reindex(d.index)).fillna(0)
+X0 = np.column_stack([np.ones(len(d)), d.dNB_mean, d.Elderly_Ratio, ratio0, d.SAVI, d.DEM])
+m0 = ml_error(y, X0, Wq)
+out['housing_na_as_zero_sem'] = {nm: dict(B=float(m0['coef'][i]), p=float(m0['p'][i])) for i, nm in enumerate(names)}
+
 (ROOT / 'results').mkdir(exist_ok=True)
 (ROOT / 'results' / 'revision_checks.json').write_text(json.dumps(out, ensure_ascii=False, indent=1, default=float))
 
@@ -132,3 +165,8 @@ print(f"SAVI 5~9월 평균 합성: 최댓값 합성과 r = {sv['r_with_max_compo
 for lv, m in out['sem_built_up_level'].items():
     print(f"SEM + {lv}: ΔNDBI B = {m['dNB_mean']['B']:.3f} (p = {m['dNB_mean']['p']:.2g}), 고령인구 B = "
           f"{m['Elderly_Ratio']['B']:.4f} (p = {m['Elderly_Ratio']['p']:.2g}), {lv} B = {m[lv]['B']:.3f}")
+print('격자 LM 검정:', {k: round(v['stat'], 1) for k, v in out['grid_lm_tests'].items()})
+print('집계구 LM 검정(희소 계산 확인):', {k: round(v['stat'], 2) for k, v in out['oa_lm_tests_check'].items()})
+z0 = out['housing_na_as_zero_sem']
+print(f"비공개 셀 0 대체 SEM: 고령인구 B = {z0['Elderly_Ratio']['B']:.4f} (p = {z0['Elderly_Ratio']['p']:.3f}), "
+      f"노후주택 B = {z0['Old_housing_Ratio']['B']:.4f} (p = {z0['Old_housing_Ratio']['p']:.3f})")

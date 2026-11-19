@@ -6,7 +6,7 @@ function mask(img) {
   var qa = img.select('QA_PIXEL');
   var m = qa.bitwiseAnd(1 << 3).eq(0).and(qa.bitwiseAnd(1 << 4).eq(0));
   var lst = img.select('ST_B10').multiply(0.00341802).add(149.0).subtract(273.15);
-  return lst.updateMask(m).rename('LST').copyProperties(img, ['system:time_start']);
+  return lst.updateMask(m).rename('LST').copyProperties(img, ['system:time_start', 'WRS_PATH', 'WRS_ROW']);
 }
 
 [2020, 2025].forEach(function (y) {
@@ -35,4 +35,8 @@ function mask(img) {
   print(y + ' 월별 장면 수', months.reduce(ee.Reducer.frequencyHistogram()));
   print(y + ' 화소당 평균 유효 관측 횟수', perPixel);
   print(y + ' 북구 평균 LST(℃)', meanLst);
+  // 장면별 WRS-2 경로·행: 촬영일이 7·9일 간격으로 번갈아 나오는 것은 북구가 인접한 두 경로의 중첩대에 있기 때문이고,
+  // 같은 날 두 장면은 같은 경로의 인접한 두 행이다(수정본 2.2절, Table 2 주).
+  print(y + ' 장면별 WRS_PATH(촬영일 순서와 같음)', col.aggregate_array('WRS_PATH'));
+  print(y + ' 장면별 WRS_ROW(촬영일 순서와 같음)', col.aggregate_array('WRS_ROW'));
 });
