@@ -178,7 +178,7 @@ box(56, 46, 42, 30, 'RQ2  Output-area model (N = 832)', ['DV: 2025 summer LST', 
 
 box(7, 9, 42, 31, 'Track 2  Mid- to long-term retrofit', ['100 m residential grid (N = 1,174)', 'Z(ΔNDBI) + Z(aged roof) + Z(ΔRLST)', 'Redevelopment cells (21) separated', 'Top 10%: 117 cells', 'Cool roofs, greening, paving'], ec=ACC2, lw=1.8)
 box(56, 9, 42, 31, 'Track 1  Short-term relief', ['Output areas (N = 832)', 'Z(LST) + Z(elderly ratio)', '67 OAs without LST: unassessed', 'Top 10%: 83 output areas', 'Cooling shelters, welfare checks'], ec=ACC1, lw=1.8)
-ax.text(52, 4.2, 'RQ3  Sensitivity analysis (MAD, winsorizing, PCA weights, indicator exclusion, residence-based exposure)', ha='center', va='center', fontsize=7.0, color=INK2)
+ax.text(52, 4.2, 'Sensitivity analysis for RQ3 (MAD, winsorizing, PCA weights, indicator exclusion, residence-based LST)', ha='center', va='center', fontsize=7.0, color=INK2)
 ax.text(52, 1.2, 'IPCC AR6 risk framework: hazard · exposure · vulnerability (sensitivity, adaptive capacity)', ha='center', va='center', fontsize=7.0, color=MUTED)
 
 arrow(46, 82, 34, 76); arrow(58, 82, 70, 76); arrow(84, 82, 84, 76)
