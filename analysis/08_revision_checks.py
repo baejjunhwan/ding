@@ -1,6 +1,7 @@
 """Step 8 - 재심 전 점검 수치 (수정본 2.4·2.5·3.3절).
 
 1) LST와 고령인구 비율의 단순상관(통제 이전), 분석 대상의 인구가중 고령인구 비율
+(4~7은 각 절 머리 주석 참조) 8) 고령인구 비공개 셀 2.5명 대체 SEM  9) 격자 SEM의 집계구 군집 강건 표준오차
 2) LST 고정 공백으로 평가하지 못한 거주 집계구 67개와 분석 대상 832개의 물리 특성 비교
    (고도, NDBI2025, SAVI2025) 및 832개로 적합한 LST 회귀식으로 추정한 67개의 참고 LST
 3) 공간가중행렬 민감도: 집계구 SEM을 Queen 대신 k-최근접(k = 4, 6, 8, 행 표준화)으로 재추정
@@ -145,6 +146,37 @@ X0 = np.column_stack([np.ones(len(d)), d.dNB_mean, d.Elderly_Ratio, ratio0, d.SA
 m0 = ml_error(y, X0, Wq)
 out['housing_na_as_zero_sem'] = {nm: dict(B=float(m0['coef'][i]), p=float(m0['p'][i])) for i, nm in enumerate(names)}
 
+# ---- 8) 고령인구 연령대별 비공개 셀(0으로 표시)을 2.5명으로 대체한 집계구 SEM(수정본 2.4절) ----------------
+# SGIS 성·연령별 인구표에는 1~4명이 나타나지 않고 0으로 표시되므로(비공개), 65세 이상 연령대(in_age_014~021)의 0을 2.5로 바꾼다.
+s1 = pd.read_excel(D / '2024 고령인구비율.xlsx', sheet_name=0, header=3, dtype={'행 레이블': str})
+s1 = s1[s1['행 레이블'].str.match(r'^\d{14}$', na=False)].set_index('행 레이블').reindex(d.index)
+age = s1[[f'in_age_{i:03d}' for i in range(14, 22)]]
+eld25 = 100 * age.replace(0, 2.5).fillna(0).sum(axis=1) / d.to_in_001
+X25 = np.column_stack([np.ones(len(d)), d.dNB_mean, eld25, d.Old_housing_Ratio, d.SAVI, d.DEM])
+m25 = ml_error(y, X25, Wq)
+out['elderly_na_as_2_5_sem'] = {'r_with_main': float(np.corrcoef(eld25, d.Elderly_Ratio)[0, 1]),
+                                **{nm: dict(B=float(m25['coef'][i]), p=float(m25['p'][i])) for i, nm in enumerate(names)}}
+
+# ---- 9) 격자 SEM(GM)에 집계구 군집 강건 표준오차 적용(수정본 Table 5 주) -------------------------------------
+# 06_ndbi_scale_check.py의 OLS와 같은 CR1 보정(G/(G-1)·(n-1)/(n-k), t(G-1))을 공간 필터링한 회귀에 적용한다.
+from spatial_models import _optim
+Wg = queen_grid(g.col_index.values, g.row_index.values); yg = g.dRLST.values; ng = len(yg)
+WtW = (Wg.T @ Wg).tocsr(); A1 = WtW - sparse.diags(WtW.diagonal())
+u = yg - Xg @ np.linalg.lstsq(Xg, yg, rcond=None)[0]; A1u, wu = A1 @ u, Wg @ u
+lam = _optim(np.array([[2 * (wu @ A1u), -(wu @ (A1 @ wu))], [wu @ ((Wg + Wg.T) @ u), -(wu @ (Wg @ wu))]]) / ng,
+             np.array([u @ A1u, u @ wu]) / ng)
+xs, ys = Xg - lam * (Wg @ Xg), yg - lam * (Wg @ yg)
+XtXi = np.linalg.inv(xs.T @ xs); bg = XtXi @ xs.T @ ys; ef = ys - xs @ bg
+cl = g.TOT_OA_CD.fillna('NONE').replace('', 'NONE').values; Gc = len(np.unique(cl)); kg = Xg.shape[1]
+meat = np.zeros((kg, kg))
+for c in np.unique(cl):
+    sc = xs[cl == c].T @ ef[cl == c]; meat += np.outer(sc, sc)
+se_cl = np.sqrt(np.diag(XtXi @ meat @ XtXi * Gc / (Gc - 1) * (ng - 1) / (ng - kg)))
+out['grid_sem_cluster_se'] = {'lambda': float(lam), 'clusters': int(Gc),
+                              **{nm: dict(B=float(bg[i]), SE_cluster=float(se_cl[i]),
+                                          p=float(2 * stats.t.sf(abs(bg[i] / se_cl[i]), Gc - 1)))
+                                 for i, nm in enumerate(['Intercept', 'RLST2020', 'dSAVI', 'SAVI2020', 'dNDBI', 'DEM'])}}
+
 (ROOT / 'results').mkdir(exist_ok=True)
 (ROOT / 'results' / 'revision_checks.json').write_text(json.dumps(out, ensure_ascii=False, indent=1, default=float))
 
@@ -170,3 +202,8 @@ print('집계구 LM 검정(희소 계산 확인):', {k: round(v['stat'], 2) for 
 z0 = out['housing_na_as_zero_sem']
 print(f"비공개 셀 0 대체 SEM: 고령인구 B = {z0['Elderly_Ratio']['B']:.4f} (p = {z0['Elderly_Ratio']['p']:.3f}), "
       f"노후주택 B = {z0['Old_housing_Ratio']['B']:.4f} (p = {z0['Old_housing_Ratio']['p']:.3f})")
+e25 = out['elderly_na_as_2_5_sem']
+print(f"고령인구 비공개 셀 2.5 대체: r = {e25['r_with_main']:.3f}, SEM 고령인구 B = {e25['Elderly_Ratio']['B']:.4f} "
+      f"(p = {e25['Elderly_Ratio']['p']:.2g})")
+print('격자 SEM 군집 강건 SE(CR1):', {k: (round(v['B'], 3), round(v['SE_cluster'], 3), f"{v['p']:.2g}")
+                                   for k, v in out['grid_sem_cluster_se'].items() if isinstance(v, dict)})
